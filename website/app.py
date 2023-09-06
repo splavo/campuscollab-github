@@ -189,11 +189,6 @@ def logout():
 def index():
     return render_template('landing-page.html')
 
-
-if __name__ == "__main__":  #and the final closing function
-    app.run(debug=True)
-
-
 # Only want to run web server if you run this file directly
 if __name__ == '__main__':
     with app.app_context():
