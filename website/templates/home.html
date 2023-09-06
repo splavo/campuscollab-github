@@ -1,5 +1,94 @@
 {% extends 'base.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
-<p> Home Page</p>
+<!-- <p> Home Page</p>
+{% if session['google_id'] %}
+<h1>Welcome, {{ session['name'] }}</h1>
+{% else %}
+<h1>not logged in</h1>
+{% endif %}
+
+<button><a href="/post-idea">Share Idea</a></button> -->
+<main>
+<section class="py-5 text-center container">
+  <div class="row py-lg-5">
+    <div class="col-lg-6 col-md-8 mx-auto">
+      <h1 class="fw-light">Welcome, {{ session['name'] }}</h1>
+      <p class="lead text-muted">Collaborate with your peers on ideas, passion projects, and startups - this is where student-driven innovation thrives.</p>
+      <p>
+        <a href="#" class="btn btn-primary my-2">Share Idea</a>
+        <a href="#" class="btn btn-secondary my-2">Something Else</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<body>
+  <!-- Album container -->
+  <div class="album py-5 bg-light">
+    <div class="container">
+      <!-- Define row -->
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+        {% for post in posts %}
+        <!-- Define column -->
+        <div class="col">
+          <div class="card shadow-sm">
+            <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"/><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
+            <!-- Define card -->
+            <div class="card-body">
+              <p class="card-title">{{ post.title }}</p>
+              <p class="card-subtitle text-muted">{{ post.author_name }}</p>
+              <p class="card-text">{{ post.description }}</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
+                </div>
+                <small class="text-muted">2 days ago</small>
+              </div>
+            </div>
+            <!-- End card -->
+          </div>
+        </div>
+        <!-- End column -->
+        {% endfor %}
+      </div>
+      <!-- End row container -->
+    </div>
+  </div>
+  <!-- End album container -->
+    <!-- <div class="py-5">
+      <div class="container">
+        <div class="row hidden-md-up">
+          {% for post in posts %}
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-block">
+                <h4 class="card-title">{{ post.title }}</h4>
+                <h6 class="card-subtitle text-muted">Support card subtitle</h6> 
+                <p class="card-text p-y-1">{{ post.description }}</p>
+                <a href="#" class="card-link">link</a>
+                <a href="#" class="card-link">Second link</a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div> -->
+          
+    
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>
+    <script src="https://pingendo.com/assets/bootstrap/bootstrap-4.0.0-alpha.6.min.js"></script>
+  </body>
+</main>
+<!-- {% for post in posts %}
+<div>
+    <h3>{{ post.title }}</h3>
+    <h4>{{ post.author_name }}</h4>
+    <p>{{ post.description }}</p>
+</div>
+{% endfor %} -->
+
 {% endblock %}
