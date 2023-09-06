@@ -32,7 +32,7 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-ENV = 'dev'
+ENV = 'prod'
 
 if ENV=='dev':
     app.debug=True
@@ -40,7 +40,7 @@ if ENV=='dev':
 
 else:
     app.debug=False
-    app.config['SQLALCHEMY_DATABASE_URI'] = ''
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -71,6 +71,12 @@ class Post(db.Model):
         self.author_id = author_id
         self.author_name = author_name
         self.description = description
+
+# @app.route('/')
+# def index():
+#     return render_template('landing-page.html')
+
+
 
 # @app.route('/view-profile')
 # def view_profile():
@@ -192,4 +198,4 @@ if __name__ == "__main__":  #and the final closing function
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        app.run(debug=True)
+        app.run()
