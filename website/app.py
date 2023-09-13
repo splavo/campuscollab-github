@@ -32,11 +32,11 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-ENV = 'prod'
+ENV = 'dev'
 
 if ENV=='dev':
     app.debug=True
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI') or 'postgresql://thqsncleqfxcpj:5cd632932cbfa0731b2281a4172cbb6cf3dbbb31cc3170dd6baa4a9a60681064@ec2-54-86-180-157.compute-1.amazonaws.com:5432/dafbs993o8blq1'
 
 else:
     app.debug=False
