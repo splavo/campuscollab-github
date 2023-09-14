@@ -17,11 +17,21 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  #this is to set our environment
 
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')  #enter your client id you got from Google console
 client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")  #set the path to where the .json file you got Google console is
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
+
+ENV = os.environ.get('ENV')
+if ENV=='dev':
+    app.debug=True
+    uri = "http://localhost:5000/callback"
+
+else:
+    app.debug=False
+    uri = app.config['SQLALCHEMY_DATABASE_URI']
 
 flow = Flow.from_client_secrets_file(  #Flow is OAuth 2.0 a class that stores all the information on how we want to authorize our users
     client_secrets_file=client_secrets_file,
     scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],  #here we are specifing what do we get after the authorization
-    redirect_uri="https://campuscollab-test-96c4f0d44031.herokuapp.com/callback"  #and the redirect URI is the point where the user will end up after the authorization
+    redirect_uri="http://localhost:5000/callback"  #and the redirect URI is the point where the user will end up after the authorization
 )
 
 
@@ -32,11 +42,12 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-ENV = 'dev'
+
+print(ENV)
 
 if ENV=='dev':
     app.debug=True
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI') or 'postgresql://thqsncleqfxcpj:5cd632932cbfa0731b2281a4172cbb6cf3dbbb31cc3170dd6baa4a9a60681064@ec2-54-86-180-157.compute-1.amazonaws.com:5432/dafbs993o8blq1'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://thqsncleqfxcpj:5cd632932cbfa0731b2281a4172cbb6cf3dbbb31cc3170dd6baa4a9a60681064@ec2-54-86-180-157.compute-1.amazonaws.com:5432/dafbs993o8blq1'
 
 else:
     app.debug=False
