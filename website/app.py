@@ -31,7 +31,7 @@ if ENV=='dev':
 
 else:
     app.debug=False
-    uri = app.config['SQLALCHEMY_DATABASE_URI']
+    uri = "https://campuscollab-test-96c4f0d44031.herokuapp.com/callback"
 
 flow = Flow.from_client_secrets_file(  #Flow is OAuth 2.0 a class that stores all the information on how we want to authorize our users
     client_secrets_file=client_secrets_file,
