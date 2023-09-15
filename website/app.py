@@ -11,7 +11,12 @@ from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 import pathlib
 from pip._vendor import cachecontrol
+from os import environ as env
+from dotenv import load_dotenv
+
+load_dotenv()
 app = Flask(__name__)
+
 app.secret_key = "secret-key"  #it is necessary to set a password when dealing with OAuth 2.0
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  #this is to set our environment to https because OAuth 2.0 only supports https environments
 
@@ -31,7 +36,7 @@ else:
 flow = Flow.from_client_secrets_file(  #Flow is OAuth 2.0 a class that stores all the information on how we want to authorize our users
     client_secrets_file=client_secrets_file,
     scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],  #here we are specifing what do we get after the authorization
-    redirect_uri="http://localhost:5000/callback"  #and the redirect URI is the point where the user will end up after the authorization
+    redirect_uri=uri  #and the redirect URI is the point where the user will end up after the authorization
 )
 
 
@@ -40,6 +45,8 @@ oauth = OAuth(app)
 
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
+
 Session(app)
 
 
@@ -47,11 +54,11 @@ print(ENV)
 
 if ENV=='dev':
     app.debug=True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://thqsncleqfxcpj:5cd632932cbfa0731b2281a4172cbb6cf3dbbb31cc3170dd6baa4a9a60681064@ec2-54-86-180-157.compute-1.amazonaws.com:5432/dafbs993o8blq1'
+     
 
 else:
     app.debug=False
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
+    
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -60,89 +67,74 @@ db = SQLAlchemy(app)
 class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String)
-    last_name = db.Column(db.String)
+    name = db.Column(db.String)
     email = db.Column(db.String)
+    google_id = db.Column(db.String)
+    school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable = True)
+    skills = db.Column(db.String)
+    experience = db.Column(db.String)
+    posts = db.relationship('Post', backref='user', lazy=True)
 
-    def __init__(self, first_name, last_name, email):
-        self.first_name = first_name
-        self.last_name = last_name
+    def __init__(self, name, email, google_id, school, skills, experience):
+        self.name = name
         self.email = email
+        self.google_id = google_id
+        self.school = school
+        self.skills = skills
+        self.experience = experience
 
 class Post(db.Model):
     __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
-    author_id = db.Column(db.Integer)
     author_name = db.Column(db.String)
     description = db.Column(db.String(500))
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
 
-    def __init__(self, title, author_id, author_name, description):
+    def __init__(self, title, author_name, description, author_id):
         self.title = title
-        self.author_id = author_id
         self.author_name = author_name
         self.description = description
+        self.author_id = author_id
 
-# @app.route('/')
-# def index():
-#     return render_template('landing-page.html')
+class School(db.Model):
+    __tablename__ = 'school'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    members = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
 
-
+    def __init__(self, name, members):
+        self.name = name
+        self.members = members
+    
 
 # @app.route('/view-profile')
 # def view_profile():
 #     return render_template('login.html')
 
-# @app.route('/collaborate')
-# def collaborate():
-#     return render_template('collaborate.html')
+@app.route('/collaborate/<int:post_id>', methods=['GET', 'POST'])
+def collaborate(post_id):
+    # Fetch post with id and get author email, then pass it into template
+    post = Post.query.filter_by(id=post_id).first()
+    return render_template('collaborate.html', post=post)
 
-# @app.route('/post-idea', methods=['GET', 'POST'])
-# def post_idea():
-#     if request.method == 'POST':
-#         title = request.form['title']
-#         author_id = session['user_id']
-#         author_name = request.form['author_name']
-#         description = request.form['description']
+@app.route('/post-idea', methods=['GET', 'POST'])
+def post_idea(): # Fix after
+    if request.method == 'POST':
+        title = request.form['title']
+        author_name = request.form['author_name']
+        description = request.form['description']
+        author_id = 1
+        new_post = Post(title, author_name, description, author_id)
+        db.session.add(new_post)
+        db.session.commit()
+        return redirect('/home')
+    else:
+        return render_template('post-idea.html')
 
-#         new_post = Post(title, author_id, author_name, description)
-#         db.session.add(new_post)
-#         db.session.commit()
-#         return redirect('/home')
-#     else:
-#         return render_template('post-idea.html')
-
-# @app.route('/about')
-# def about():
-#     return render_template('about.html')
-# @app.route('/login')
-# def login():
-#     authorization_url, state = flow.authorization_url()  #asking the flow class for the authorization (login) url
-#     session["state"] = state
-#     return redirect(authorization_url)
-
-
-# @app.route('/login', methods=['GET', 'POST'])
-# def login():
-#     if request.method == 'POST':
-#         first_name = request.form['first_name']
-#         last_name = request.form['last_name']
-#         email = request.form['email']
-
-#         user = User.query.filter_by(email = email).first()
-        
-#         if db.session.query(User).filter(User.email == email).count() == 0:
-#             data = User(first_name, last_name, email)
-#             db.session.add(data)
-#             db.session.commit()
-#             session['first_name'] = user.first_name
-#             
-#         else:
-#             user = User.query.filter_by(email = email).first()
-#             session['first_name'] = user.first_name
-                
-#     else:
-#         return render_template('login.html')
+@app.route('/about')
+def about():
+    return render_template('about.html')
 
 def login_required(function):  #a function to check if the user is authorized or not
     def wrapper(*args, **kwargs):
@@ -180,7 +172,23 @@ def callback():
     session["google_id"] = id_info.get("sub")  #defing the results to show on the page
     session["name"] = id_info.get("name")
     session["email"] = id_info.get("email")
+    
     print(session)
+
+    
+
+    # Add to database
+    
+    if db.session.query(User).filter(User.email == session["email"]).count() == 0:
+            data = User(session["name"], session["email"], session["google_id"], 12345, 'skills', 'experience')
+            db.session.add(data)
+            db.session.commit()
+            
+    else:
+        user = User.query.filter_by(email = session["email"]).first()
+        print(user)
+                
+
     return redirect("/home")  #the final page where the authorized users will end up
 
 @app.route('/home')

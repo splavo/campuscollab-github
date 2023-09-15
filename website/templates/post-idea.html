@@ -4,7 +4,7 @@
 <p> Post Idea Page</p>
 <form action="/post-idea" method="POST">
     <input name="title" type="text" placeholder="Title" />
-    <input name="author_name" type="text" value="{{ session['first_name'] }} {{ session['last_name'] }}" readonly />
+    <input name="author_name" type="text" value="{{ session['name'] }}" readonly />
     <input name="description" type="text" placeholder="Description" />
     <input type="submit" value="Share Idea" />
 </form>

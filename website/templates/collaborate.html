@@ -2,4 +2,10 @@
 {% block title %}Collaborate{% endblock %}
 {% block content %}
 <p> Collaborate Page</p>
+<form action="/collaborate/{{post.id}}" method="POST">
+    <!-- <p><label for="message">Message</label></p> -->
+    <!-- <textarea name="message" placeholder="Hello {{ post.author_name }}! I'm interested in {{ post.title }}..."></textarea> -->
+    <input type="submit">
+</form>
+
 {% endblock %}
