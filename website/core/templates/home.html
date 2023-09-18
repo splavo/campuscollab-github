@@ -7,16 +7,26 @@
   <div class="row py-lg-5">
     <div class="col-lg-6 col-md-8 mx-auto">
       <h1 class="fw-light">Welcome, {{ session['name'] }}</h1>
+      <p>{{ session['school_name'] }}</p>
       <p class="lead text-muted">Collaborate with your peers on ideas, passion projects, and startups - this is where student-driven innovation thrives.</p>
       <p>
         <a href="/post-idea" class="btn btn-primary my-2">Share Idea</a>
-        <a href="#" class="btn btn-secondary my-2">Something Else</a>
+        <a href="/edit-profile" class="btn btn-secondary my-2">Edit Profile</a>
       </p>
     </div>
   </div>
 </section>
 
 <body>
+  {% if schools %}
+  <p>Discover Ideas From </p>
+  <select>
+    <option value="All" selected>All</option>
+    {% for school in schools %}
+      <option value="{{ school.name }}">{{ school.name }}</option>
+    {% endfor %}
+  </select>
+  {% endif %}
   <!-- Album container -->
   <div class="album py-5 bg-light">
     <div class="container">

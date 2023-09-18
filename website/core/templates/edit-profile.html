@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile{% endblock %}
+{% block content %}
+<p> Edit Profile Page</p>
+<form action="/edit-profile" method="post">
+    <label for="name">Name</label>
+    <input name="name" id="name">
+    <label for="email">Email</label>
+    <input name="email" id="email" readonly>
+    <label for="school">School</label>
+    <select name="school" id="school">
+        {% for school in schools %}
+        <option value="{{ school.name }}">{{ school.name }}</option>
+        {% endfor %}
+    </select>
+    <label for="major">Major</label>
+    <input name="major" id="major">
+    <input type="submit" value="Save">
+</form>
+{% endblock %}
