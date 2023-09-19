@@ -1,5 +1,6 @@
-from core import app
+from app import app
 from flask_sqlalchemy import SQLAlchemy
+import os
 
 db = SQLAlchemy(app)
 

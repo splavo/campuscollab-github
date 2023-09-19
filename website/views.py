@@ -1,4 +1,4 @@
-from core import app
+from app import app
 from models import db, User, Post, School
 from flask import Flask, Blueprint, url_for, redirect, current_app, request, session, render_template, abort
 import os

@@ -1,4 +1,4 @@
-from core import app
+from app import app
 
 # Only want to run web server if you run this file directly
 if __name__ == '__main__':
