@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 from app import app
-=======
->>>>>>> 45c92b5e70c708318ccdfaeb96a13b746bd722fc
 from models import db, User, Post, School
 from flask import Flask, Blueprint, url_for, redirect, current_app, request, session, render_template, abort
 import os
