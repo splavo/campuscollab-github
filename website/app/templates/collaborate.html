@@ -3,9 +3,16 @@
 {% block content %}
 <p> Collaborate Page</p>
 <form action="/collaborate/{{post.id}}" method="POST">
-    <!-- <p><label for="message">Message</label></p> -->
-    <!-- <textarea name="message" placeholder="Hello {{ post.author_name }}! I'm interested in {{ post.title }}..."></textarea> -->
+    <p><label for="body">Message</label></p>
+    <textarea name="body" placeholder="Hello {{ post.author_name }}! I'm interested in {{ post.title }}..."></textarea>
     <input type="submit">
 </form>
+
+{% if messages %}
+    {% for message in messages %}
+        <h4>{{ message.author }}</h4>
+        <p>{{ message.body }}</p>
+    {% endfor %}
+{% endif %}
 
 {% endblock %}

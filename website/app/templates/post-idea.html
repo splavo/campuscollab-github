@@ -5,6 +5,7 @@
 <form action="/post-idea" method="POST">
     <input name="title" type="text" placeholder="Title" />
     <input name="author_name" type="text" value="{{ session['name'] }}" readonly />
+    <input name="author_email" type="text" value="{{ session['email'] }}" readonly />
     <input name="description" type="text" placeholder="Description" />
     <input type="submit" value="Share Idea" />
 </form>

@@ -1,28 +1,21 @@
 from app import app
 from flask_sqlalchemy import SQLAlchemy
-import os
+import json
+from datetime import datetime
 
 db = SQLAlchemy(app)
 
-
-
-
-
-
 class User(db.Model):
     __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
+    id = db.Column(db.String, primary_key = True)
     email = db.Column(db.String)
-    google_id = db.Column(db.String)
-    school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable = True)
+    name = db.Column(db.String)
     posts = db.relationship('Post', backref='user', lazy=True)
 
-    def __init__(self, name, email, google_id, school_id, posts):
-        self.name = name
+    def __init__(self, id, name, email, posts):
+        self.id = id
         self.email = email
-        self.google_id = google_id
-        self.school_id = school_id
+        self.name = name
         self.posts = posts
 
 class Post(db.Model):
@@ -31,7 +24,7 @@ class Post(db.Model):
     title = db.Column(db.String(100))
     author_name = db.Column(db.String)
     description = db.Column(db.String(500))
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
+    author_id = db.Column(db.String, db.ForeignKey('user.id'), nullable = True) # nullable just for production
 
     def __init__(self, title, author_name, description, author_id):
         self.title = title
@@ -39,19 +32,32 @@ class Post(db.Model):
         self.description = description
         self.author_id = author_id
 
-class School(db.Model):
-    __tablename__ = 'school'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    members = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
-    code = db.Column(db.String(50))
+class Message(db.Model):
+    __tablename__ = 'message'
+    id = db.Column(db.Integer, primary_key = True)
+    sender_id = db.Column(db.String, db.ForeignKey('user.id')) # Google ID
+    chat_room_id = db.Column(db.Integer, db.ForeignKey('chat_room.id'))
+    body = db.Column(db.String(800))
+    timestamp = db.Column(db.DateTime, default = datetime.utcnow)
 
-    def __init__(self, name, members, code):
-        self.name = name
-        self.members = members
-        self.code = code
+    def __init__(self, sender_id, chat_room_id, body, timestamp):
+        self.sender_id = sender_id
+        self.chat_room_id = chat_room_id
+        self.body = body
+        self.timestamp = timestamp
 
+class ChatRoom(db.Model):
+    __tablename__ = 'chat_room'
+    id = db.Column(db.Integer, primary_key = True)
+    user1_id = db.Column(db.String, db.ForeignKey('user.id'))
+    user2_id = db.Column(db.String, db.ForeignKey('user.id'))
+
+    def __init__(self, user1_id, user2_id):
+        self.user1_id = user1_id
+        self.user2_id = user2_id
+            
 
 if __name__ == '__main__':
     db.create_all()
+    db.session.commit()
     

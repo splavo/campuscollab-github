@@ -1,9 +1,9 @@
-<<<<<<< HEAD
 from app import app
-=======
->>>>>>> 45c92b5e70c708318ccdfaeb96a13b746bd722fc
-from models import db, User, Post, School
+from sqlalchemy import func, or_, and_
+from models import db, User, Post, Message, ChatRoom
 from flask import Flask, Blueprint, url_for, redirect, current_app, request, session, render_template, abort
+
+
 import os
 from flask_session import Session
 import requests
@@ -13,6 +13,7 @@ from google_auth_oauthlib.flow import Flow
 from pip._vendor import cachecontrol
 from authlib.integrations.flask_client import OAuth
 import pathlib
+from datetime import datetime
 
 
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')  #enter your client id you got from Google console
@@ -41,43 +42,104 @@ flow = Flow.from_client_secrets_file(  #Flow is OAuth 2.0 a class that stores al
 
 oauth = OAuth(app)
 
-# @app.route('/')
-# def index():
-#     return 'hello'
 
+
+def get_or_create_chat_room(user1, user2):
+    room = db.session.query(ChatRoom).filter(ChatRoom.user1_id == user1, ChatRoom.user2_id == user2).first()
+    print(room)
+    if room is None:
+        room = ChatRoom(user1, user2)
+        db.session.add(room)
+        db.session.commit()
+    return room
+
+
+
+
+def get_user_chat_rooms(user_id):
+    # Query all messages for a specific user, group by chat_room_id
+    result = (
+        db.session.query(
+            ChatRoom.id.label("chat_room_id")
+        )
+        .select_from(Message)
+        .join(ChatRoom, or_(
+            and_(Message.sender_id == user_id, ChatRoom.user1_id == user_id),
+            and_(Message.sender_id == user_id, ChatRoom.user2_id == user_id),
+            and_(Message.chat_room_id == ChatRoom.id, ChatRoom.user1_id == user_id),
+            and_(Message.chat_room_id == ChatRoom.id, ChatRoom.user2_id == user_id)
+        ))
+        .group_by(ChatRoom.id)
+        .all()
+    )
+
+    # Extract the chat room IDs from the result
+    chat_rooms = [row.chat_room_id for row in result]
+
+
+    return chat_rooms
+
+
+def get_messages_for_chat_room(chat_room_id):
+    # Assuming your Message model has a 'timestamp' field for sorting
+    messages = Message.query.filter_by(chat_room_id=chat_room_id).order_by(Message.timestamp).all()
+    for message in messages:
+        print(message.sender_id, message.chat_room_id)
+    return messages
+
+    
+
+
+# ------ Main Routes ------
 @app.route('/view-profile')
 def view_profile():
     return render_template('view-profile.html')
 
-@app.route('/edit-profile', methods=['GET','POST'])
-def edit_profile():
+@app.route('/chat/<int:chat_room_id>', methods = ['GET', 'POST'])
+def chat(chat_room_id):
+
     if request.method == 'POST':
-        name = request.form['name']
-        school = request.form['school']
-        major = request.form['major']
-        
-        
-        user = User.query.filter_by(email=session['email']).first()
-        user.name = name
-        # user.school = school
-        user.major = major
-        session['name'] = name
-        
-        school_now = School.query.filter_by(name=school).first()
-        school_id = school_now.id
-        
-        user.school_id = school_id
+        new_message = Message(session['user_id'], chat_room_id, request.form['body'], datetime.utcnow())
+        db.session.add(new_message)
         db.session.commit()
-        return redirect('/view-profile')
+
+        return redirect(url_for('chat', chat_room_id=chat_room_id))
+    
     else:
-        schools = School.query.all()
-        return render_template('edit-profile.html', schools = schools)
+
+        chat_room_ids = get_user_chat_rooms(session['user_id'])
+        messages = get_messages_for_chat_room(chat_room_id)
+        current_chat_room = chat_room_id
+        print(messages)
+        
+    return render_template('chat.html', chat_room_ids=chat_room_ids, messages=messages, current_chat_room=current_chat_room)
 
 @app.route('/collaborate/<int:post_id>', methods=['GET', 'POST'])
 def collaborate(post_id):
-    # Fetch post with id and get author email, then pass it into template
+    
+    # Fetch post with post id
     post = Post.query.filter_by(id=post_id).first()
-    return render_template('collaborate.html', post=post)
+
+    if request.method == 'POST':
+
+        chat_room = get_or_create_chat_room(session['user_id'], post.author_id)
+
+        # Create new message
+        sender_id = session['user_id']
+        
+        body = request.form['body']
+        timestamp = datetime.utcnow()
+        new_message = Message(sender_id, chat_room.id, body, timestamp)
+
+        db.session.add(new_message)
+        db.session.add(chat_room)
+        db.session.commit()
+
+        
+        return redirect(url_for('chat', chat_room_id=chat_room.id))
+    
+    else:
+        return render_template('collaborate.html', post=post)
 
 @app.route('/post-idea', methods=['GET', 'POST'])
 def post_idea(): # Fix after
@@ -85,11 +147,13 @@ def post_idea(): # Fix after
         title = request.form['title']
         author_name = request.form['author_name']
         description = request.form['description']
-        author_id = 1
-        new_post = Post(title, author_name, description, author_id)
+        print(session['user_id'])
+        new_post = Post(title, author_name, description, session['user_id'])
+        print(new_post)
         db.session.add(new_post)
         db.session.commit()
         return redirect('/home')
+    
     else:
         return render_template('post-idea.html')
 
@@ -99,7 +163,7 @@ def about():
 
 def login_required(function):  #a function to check if the user is authorized or not
     def wrapper(*args, **kwargs):
-        if "google_id" not in session:  #authorization required
+        if "user_id" not in session:  #authorization required
             return redirect('/login')
         else:
             return function()
@@ -130,56 +194,31 @@ def callback():
         audience=GOOGLE_CLIENT_ID
     )
     print('id_info: ', id_info)
-    session["google_id"] = id_info.get("sub")  #defing the results to show on the page
+    session["user_id"] = id_info.get("sub")  #defing the results to show on the page
     session["name"] = id_info.get("name")
     session["email"] = id_info.get("email")
     session['picture'] = id_info.get('picture')
-    
-        
-    
-    # Add to database
-    if db.session.query(User).filter(User.email == session["email"]).count() == 0:
-            data = User(session["name"], session["email"], session["google_id"], 1)
-            
-            db.session.add(data)
-            db.session.commit()
-            user = User.query.filter_by(email = session["email"]).first()
-            session['user_id'] = user.id
+
+    # If the user doesnt exist
+    if db.session.query(User).filter(User.id == session["user_id"]).count() == 0:
+
+        # Create user
+        new_user = User(session["user_id"], session["email"], session["name"],[])
+        db.session.add(new_user)
+        db.session.commit()
+
+    # Else query the user and set user_id session variabele
     else:
-        user = User.query.filter_by(email = session["email"]).first()
+        user = User.query.filter_by(id = session["user_id"]).first()
         session['user_id'] = user.id
-        # session['school_name'] = user.school_id
-        print(user)
 
-    # Check for & store school
-    school_code = id_info.get('hd')
-    if school_code == None:
-        session['school_code'] = None
-    else:
-        session['school_code'] = school_code
-
-    
-
-    if db.session.query(School).filter(School.code == school_code).count() == 0:
-        if school_code == 'wfu.edu':
-            session['school_name'] = 'Wake Forest University' # Hardcoded school name - find directory/make later
-            new_school = School(session['school_name'], user.id, session['school_code'])
-            db.session.add(new_school)
-            db.session.commit()
-    else:
-        school = School.query.filter_by(code = school_code).first()
-        session['school_name'] = school.name
-        print('session[\'school_name\']: ', session['school_name'])
-    
     return redirect("/home")  #the final page where the authorized users will end up
 
 @app.route('/home')
 @login_required
 def home():
     posts = db.session.query(Post).all()
-    schools = db.session.query(School).all()
-    print(schools)
-    return render_template('home.html', posts = posts, schools = schools)
+    return render_template('home.html', posts = posts)
 
 
 @app.route("/logout")  #the logout page and function
