@@ -1,6 +1,8 @@
 from app import app
+
 from sqlalchemy import func, or_, and_
 from models import db, User, Post, Message, ChatRoom
+
 from flask import Flask, Blueprint, url_for, redirect, current_app, request, session, render_template, abort
 
 

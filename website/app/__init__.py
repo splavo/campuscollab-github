@@ -1,10 +1,12 @@
 import os
 from flask import Flask
-from dotenv import load_dotenv # COMMENT OUT FOR DEPLOYMENT
+
+# from dotenv import load_dotenv
+
 from os import environ as env
 # import pathlib
 
-load_dotenv()
+# load_dotenv()
 app = Flask(__name__)
 
 
