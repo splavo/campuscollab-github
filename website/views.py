@@ -1,11 +1,9 @@
 from app import app
-
 from sqlalchemy import func, or_, and_
 from models import db, User, Post, Message, ChatRoom
-
 from flask import Flask, Blueprint, url_for, redirect, current_app, request, session, render_template, abort
 
-
+import datetime
 import os
 from flask_session import Session
 import requests
@@ -99,7 +97,8 @@ def view_profile():
 
 @app.route('/chat/<int:chat_room_id>', methods = ['GET', 'POST'])
 def chat(chat_room_id):
-
+    
+    
     if request.method == 'POST':
         new_message = Message(session['user_id'], chat_room_id, request.form['body'], datetime.utcnow())
         db.session.add(new_message)
@@ -111,10 +110,15 @@ def chat(chat_room_id):
 
         chat_room_ids = get_user_chat_rooms(session['user_id'])
         messages = get_messages_for_chat_room(chat_room_id)
+        names = {}
+        for message in messages:
+            names[message.sender_id] = User.query.filter_by(id = message.sender_id).first().name
+        
+        
         current_chat_room = chat_room_id
         print(messages)
         
-    return render_template('chat.html', chat_room_ids=chat_room_ids, messages=messages, current_chat_room=current_chat_room)
+    return render_template('chat.html', chat_room_ids=chat_room_ids, messages=messages, current_chat_room=current_chat_room, names = names)
 
 @app.route('/collaborate/<int:post_id>', methods=['GET', 'POST'])
 def collaborate(post_id):

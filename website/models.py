@@ -38,7 +38,9 @@ class Message(db.Model):
     sender_id = db.Column(db.String, db.ForeignKey('user.id')) # Google ID
     chat_room_id = db.Column(db.Integer, db.ForeignKey('chat_room.id'))
     body = db.Column(db.String(800))
-    timestamp = db.Column(db.DateTime, default = datetime.utcnow)
+    t = datetime.now()
+    tt  = t.strftime("%m %H:%M")
+    timestamp = db.Column(db.DateTime, default = tt)
 
     def __init__(self, sender_id, chat_room_id, body, timestamp):
         self.sender_id = sender_id
